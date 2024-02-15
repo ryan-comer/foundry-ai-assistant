@@ -1,0 +1,15 @@
+{
+    "id": "foundry-ai-assistant",
+    "title": "An AI assistant to help you generate content for your Foundry VTT games.",
+    "authors": [
+        {
+            "name": "Ryan Comer"
+        }
+    ],
+    "version": "0.1.0",
+    "esmodules": [
+        "scripts/aiAssistant.js",
+        "scripts/generator.js",
+        "scripts/textGenerator.js"
+    ]
+}
