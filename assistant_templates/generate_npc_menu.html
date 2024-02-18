@@ -6,9 +6,10 @@
             const npcPrompt = document.getElementById('npcPrompt').value;
             const includeImage = document.getElementById('includeImage').checked;
             const imagePrompt = document.getElementById('imagePrompt').value;
+            const challengeRating = document.getElementById('challengeRating').value;
 
             document.getElementById('generateStatusText').innerText = 'Generating...';
-            generateNPC(npcPrompt, includeImage, imagePrompt).then((npc) => {
+            generateNPC(npcPrompt, challengeRating, includeImage, imagePrompt).then((npc) => {
                 document.getElementById('generateStatusText').innerText = '';
                 console.log(npc);
             });
@@ -32,11 +33,25 @@
         <textarea id="npcPrompt" placeholder="Enter a prompt for the NPC"></textarea>
         <div style="
             display: flex;
-            align-items: center;
-            margin-bottom: 10px;
+            flex-direction: column;
         ">
-            <input type="checkbox" id="includeImage" name="includeImage" value="includeImage" onclick="includeImageCheckboxClicked()">
-            <span>Include Image</span>
+            <p>
+                Leave the CR field blank to let the AI choose a CR for the NPC.
+            </p>
+            <div style="
+                display: flex;
+                align-items: center;
+            ">
+                <span style="margin-right: 5px;">CR: </span>
+                <input type="number" id="challengeRating" name="challengeRating" placeholder="CR" min="1" max="20" style="width: 30px;">
+            </div>
+            <div style="
+                display: flex;
+                align-items: center;
+            ">
+                <input type="checkbox" id="includeImage" name="includeImage" value="includeImage" onclick="includeImageCheckboxClicked()">
+                <span>Include Image</span>
+            </div>
         </div>
         <div id="imageOptions" style="display: none;">
             <h4>Image Prompt</h4>

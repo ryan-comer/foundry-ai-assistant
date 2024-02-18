@@ -75,11 +75,11 @@ export async function openAssistantMenu(title, templatePath) {
 }
 
 // Generate a new NPC
-export async function generateNPC(npcPrompt, includeImage=false, imagePrompt='') {
+export async function generateNPC(npcPrompt, challengeRating, includeImage=false, imagePrompt='') {
   const generator = new Generator()
 
   // Generate the NPC
-  const npc = await generator.generateNPC(npcPrompt, includeImage, imagePrompt)
+  const npc = await generator.generateNPC(npcPrompt, challengeRating)
 
   // Check if the user has an Actors folder called 'AI Generated NPCs'
   let folder = game.folders.getName('AI Generated NPCs')
@@ -90,7 +90,7 @@ export async function generateNPC(npcPrompt, includeImage=false, imagePrompt='')
   // Create the Actor
   const actor = await Actor.create({
     name: npc.name,
-    type: 'character',
+    type: 'npc',
     folder: folder.id,
     data: {
       attributes: {
@@ -129,14 +129,31 @@ export async function generateNPC(npcPrompt, includeImage=false, imagePrompt='')
         appearance: npc.appearance,
         background: npc.background,
         biography: {
-          value: npc.biography
+          value: `
+          <h2>Biography</h2>
+          ${npc.biography}
+          <h2>Appearance</h2>
+          ${npc.appearance}
+          <h2>Personality Traits</h2>
+          ${npc.personalityTraits}
+          <h2>Bonds</h2>
+          ${npc.bonds}
+          <h2>Ideals</h2>
+          ${npc.ideals}
+          <h2>Flaws</h2>
+          ${npc.flaws}
+          `
         },
+        cr: npc.challengeRating,
         bond: npc.bonds,
         trait: npc.personalityTraits,
         flaw: npc.flaws,
         ideal: npc.ideals,
         alignment: npc.alignment,
         race: npc.race
+      },
+      traits: {
+        size: npc.size
       }
     } 
   })
@@ -175,6 +192,92 @@ export async function generateNPC(npcPrompt, includeImage=false, imagePrompt='')
     })
   }
 
+  // Check for an Items folder for AI Generated NPCs
+  let parentFolder = game.folders.getName('AI Generated NPCs Items')
+  if (!parentFolder) {
+    parentFolder = await Folder.create({name: 'AI Generated NPCs Items', type: 'Item'})
+  }
 
-  return npc
+  // Check for Items folder for that NPC inside the parent folder
+  let itemFolder = game.folders.getName(`${npc.name} Items`)
+  if (!itemFolder) {
+    itemFolder = await Folder.create({name: `${npc.name} Items`, type: 'Item', parent: parentFolder.id})
+  }
+
+  // Create the weapons
+  for (let weapon of npc.weapons) {
+    const newWeapon = await Item.create({
+      name: weapon.name,
+      type: 'weapon',
+      folder: itemFolder.id,
+      data: {
+        description: {
+          value: `<h3>Description</h3>${weapon.description}<br><br><h3>Effect</h3>${weapon.effect}`
+        }
+      }
+    })
+
+    // Add the weapon to the Actor
+    await actor.createEmbeddedDocuments('Item', [{
+      name: weapon.name,
+      type: 'weapon',
+      data: {
+        description: {
+          value: `<h2>Description</h2>${weapon.description}<br><br><h2>Effect</h2>${weapon.effect}`
+        }
+      }
+    }])
+  }
+
+  // Create the Equipment
+  for (let equipment of npc.equipment) {
+    const newEquipment = await Item.create({
+      name: equipment.name,
+      type: 'equipment',
+      folder: itemFolder.id,
+      data: {
+        description: {
+          value: `<h2>Description</h2>${equipment.description}<br><br><h2>Effect</h2>${equipment.effect}`
+        }
+      }
+    })
+
+    // Add the equipment to the Actor
+    await actor.createEmbeddedDocuments('Item', [{
+      name: equipment.name,
+      type: 'equipment',
+      data: {
+        description: {
+          value: `<h2>Description</h2>${equipment.description}<br><br><h2>Effect</h2>${equipment.effect}`
+        }
+      }
+    }])
+  }
+
+  // Create the Abilities
+  for (let ability of npc.abilities) {
+    const newAbility = await Item.create({
+      name: ability.name,
+      type: 'feat',
+      folder: itemFolder.id,
+      data: {
+        description: {
+          value: `<h2>Description</h2>${ability.description}<br><br><h2>Effect</h2>${ability.effect}`
+        }
+      }
+    })
+
+    // Add the ability to the Actor
+    await actor.createEmbeddedDocuments('Item', [{
+      name: ability.name,
+      type: 'feat',
+      data: {
+        description: {
+          value: `<h2>Description</h2>${ability.description}<br><br><h2>Effect</h2>${ability.effect}`
+        }
+      }
+    }])
+  }
+
+  return actor
 }

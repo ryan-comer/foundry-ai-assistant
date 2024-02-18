@@ -18,7 +18,7 @@ export class Generator {
     }
 
     // Generate a new NPC
-    async generateNPC(userPrompt) {
+    async generateNPC(userPrompt, challengeRating) {
         const systemPrompt = `
         You will be generating an NPC for a fantasy world based on a prompt from the user. You will be creating the character sheet for the NPC.
 
@@ -36,6 +36,7 @@ export class Generator {
             "bonds": "BONDS_OF_CHARACTER",  // String
             "flaws": "FLAWS_OF_CHARACTER",  // String
             "challengeRating": "CHALLENGE_RATING",  // Integer
+            "size": "SIZE_OF_CHARACTER",    // ["tiny", "sm", "med", "lg", "huge", "grg"]
             "attributes": {
                 "strength": "STRENGTH_VALUE",   // Integer
                 "dexterity": "DEXTERITY_VALUE", // Integer
@@ -47,7 +48,41 @@ export class Generator {
             "armorClass": "ARMOR_CLASS",   // Integer
             "hitPoints": "HIT_POINTS",  // Integer
             "speed": "SPEED",  // Integer
+            // Don't forget to include basic equipment, weapons, and abilities that can be used every round, as well as any special abilities that can be used once per day or once per encounter.
+            // Make sure to specify when the abilities can be used and what they do.
+            // Make the NPC's abilities and equipment match the challenge rating and the theme of the character
+            // You must include at least one weapon, the NPC needs to have a set of basic attacks it can do every round
+            "weapons": [
+                {
+                    "name": "WEAPON_NAME",   // String
+                    "description": "WEAPON_DESCRIPTION"    // String
+                    "effect": "WEAPON_EFFECT"    // String, description of what the item can do, include damage (e.g. 1d10), range, duration, etc.
+                }
+            ],
+            "equipment": [
+                {
+                    "name": "ITEM_NAME",   // String
+                    "description": "ITEM_DESCRIPTION",    // String
+                    "effect": "ITEM_EFFECT"    // String, description of what the item does.
+                }
+            ],
+            "abilities": [
+                {
+                    "name": "ABILITY_NAME",   // String
+                    "description": "ABILITY_DESCRIPTION"    // String
+                    "effect": "DESCRIPTION_OF_EFFECT"    // String, description of what the ability does, include duration, range, damage (e.g. 2d6 fire), etc.
+                }
+            ]
         }
+
+        The challenge rating of the NPC should be based on the Dungeons & Dragons 5th Edition rules. The challenge rating determines the difficulty of the NPC in combat. 
+        For example, a challenge rating of 1 is suitable for a party of four 1st-level characters, while a challenge rating of 5 is suitable for a party of four 5th-level characters.
+        Do everything you can to make the challenge rating accurate
+        If the challenge rating is high, then the NPC should be very hard to defeat in combat. If the challenge rating is low, then the NPC should be easy to defeat in combat.
+        This should take precedence over what you think this type of character would normally be like.
+        Do everything you can to make the challenge rating accurate.
+
+        ${challengeRating ? `The challenge rating for this NPC should be ${challengeRating}.` : ''}
 
         Only respond with the JSON format, don't include any other text.
 

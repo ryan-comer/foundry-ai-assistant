@@ -34,7 +34,6 @@ export class OpenAITextGenerator extends TextGenerator {
             ]
         }
 
-        /*
         const response = await fetch(this.endpointUrl, {
             method: 'POST',
             headers: headers,
@@ -48,8 +47,8 @@ export class OpenAITextGenerator extends TextGenerator {
         const json = await response.json();
         const content = json.choices[0].message.content;
         return JSON.parse(content);
-        */
 
+        /*
         return {
             "name": "Thaldrin Fireheart",
             "appearance": "Thaldrin is a tall and imposing figure with fiery red hair and bright golden eyes that seem to flicker like flames. He wears ornate armor adorned with intricate designs of dragons and carries a blade that glows with inner heat.",
@@ -75,6 +74,7 @@ export class OpenAITextGenerator extends TextGenerator {
             "hitPoints": 65,
             "speed": 30
         }
+        */
     }
 
 }
