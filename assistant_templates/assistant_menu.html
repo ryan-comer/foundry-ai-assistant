@@ -8,8 +8,14 @@
         document.getElementById('generateEncounterButton').addEventListener('click', () => {
             openAssistantMenu('Generate Encounter', 'modules/foundry-ai-assistant/assistant_templates/generate_encounter_menu.html');
         });
+        document.getElementById('generateItemButton').addEventListener('click', () => {
+            openAssistantMenu('Generate Item', 'modules/foundry-ai-assistant/assistant_templates/generate_item_menu.html');
+        });
         document.getElementById('generateQuestButton').addEventListener('click', () => {
             openAssistantMenu('Generate Quest', 'modules/foundry-ai-assistant/assistant_templates/generate_quest_menu.html');
+        });
+        document.getElementById('generateBackgroundButton').addEventListener('click', () => {
+            openAssistantMenu('Generate Background', 'modules/foundry-ai-assistant/assistant_templates/generate_background_menu.html');
         });
         document.getElementById('generatePuzzleButton').addEventListener('click', () => {
             openAssistantMenu('Generate Puzzle', 'modules/foundry-ai-assistant/assistant_templates/generate_puzzle_menu.html');
@@ -22,8 +28,14 @@
     <button id="generateEncounterButton">
         Generate Encounter
     </button>
+    <button id="generateItemButton">
+        Generate Item
+    </button>
     <button id="generateQuestButton">
         Generate Quest
+    </button>
+    <button id="generateBackgroundButton">
+        Generate Background
     </button>
     <button id="generatePuzzleButton">
         Generate Puzzle

@@ -1,0 +1,24 @@
+<div>
+    <script type="module">
+        import { generateBackground } from '/modules/foundry-ai-assistant/scripts/aiAssistant.js';
+
+        // Clear the event listener for the generate button
+        document.getElementById('generateButton').removeEventListener('click', () => {});
+        document.getElementById('generateButton').addEventListener('click', async () => {
+            const backgroundPrompt = document.getElementById('backgroundPrompt').value;
+
+            document.getElementById('generateStatusText').innerText = 'Generating...';
+            generateBackground(backgroundPrompt).then((scene) => {
+                document.getElementById('generateStatusText').innerText = '';
+                console.log(scene);
+            });
+        });
+    </script>
+    <div>
+        <h2>Generate Background</h2>
+        <h4>Prompt</h4>
+        <textarea id="backgroundPrompt" placeholder="Enter a prompt to describe the background. Leave blank to generate a random background"></textarea>
+        <p id="generateStatusText"></p>
+        <button id="generateButton">Generate</button>
+    </div>
+</div>

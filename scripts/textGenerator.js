@@ -34,6 +34,9 @@ export class OpenAITextGenerator extends TextGenerator {
             ]
         }
 
+        console.log("SYSTEM PROMPT: " + systemPrompt)
+        console.log("USER PROMPT: " + userPrompt)
+
         const response = await fetch(this.endpointUrl, {
             method: 'POST',
             headers: headers,
@@ -46,6 +49,7 @@ export class OpenAITextGenerator extends TextGenerator {
 
         const json = await response.json();
         const content = json.choices[0].message.content;
+        console.log(content)
         return JSON.parse(content);
 
         /*

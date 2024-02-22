@@ -1,0 +1,63 @@
+<div>
+    <script type="module">
+        import { generateEncounter } from '/modules/foundry-ai-assistant/scripts/aiAssistant.js';
+
+        // Clear the event listener for the generate button
+        document.getElementById('generateButton').removeEventListener('click', () => {});
+        document.getElementById('generateButton').addEventListener('click', async () => {
+            const encounterPrompt = document.getElementById('encounterPrompt').value;
+            const includeImage = document.getElementById('includeImage').checked;
+            const challengeRating = document.getElementById('challengeRating').value;
+
+            document.getElementById('generateStatusText').innerText = 'Generating...';
+            generateEncounter(encounterPrompt, challengeRating, includeImage).then((encounter) => {
+                document.getElementById('generateStatusText').innerText = '';
+                console.log(encounter);
+            });
+        });
+    </script>
+    <script>
+        function includeImageCheckboxClicked() {
+            const includeImage = document.getElementById('includeImage').checked;
+
+            if(includeImage) {
+                document.getElementById('imageOptions').style.display = 'block';
+            } else {
+                document.getElementById('imageOptions').style.display = 'none';
+            }
+        }
+    </script>
+    <div>
+        <h2>Generate Encounter</h2>
+        <h4>Prompt</h4>
+        <textarea id="encounterPrompt" placeholder="Enter a prompt to describe the encounter. Leave blank to generate a random encounter"></textarea>
+        <div style="
+            display: flex;
+            flex-direction: column;
+        ">
+            <p>
+                Leave the CR field blank to let the AI choose a CR for the NPC.
+            </p>
+            <div style="
+                display: flex;
+                align-items: center;
+            ">
+                <span style="margin-right: 5px;">CR: </span>
+                <input type="number" id="challengeRating" name="challengeRating" placeholder="CR" min="1" max="20" style="width: 30px;">
+            </div>
+            <div style="
+                display: flex;
+                align-items: center;
+            ">
+                <input type="checkbox" id="includeImage" name="includeImage" value="includeImage" onclick="includeImageCheckboxClicked()">
+                <span>Include NPC Images</span>
+            </div>
+        </div>
+        <div id="imageOptions" style="display: none;">
+            <h4>Image Prompt</h4>
+            <textarea id="imagePrompt" placeholder="Enter a prompt for the image. If blank, the NPC description will be used to generate the image"></textarea>
+        </div>
+        <p id="generateStatusText"></p>
+        <button id="generateButton">Generate</button>
+    </div>
+</div>

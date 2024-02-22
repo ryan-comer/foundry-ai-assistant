@@ -281,3 +281,321 @@ export async function generateNPC(npcPrompt, challengeRating, includeImage=false
 
   return actor
 }
+
+// Generate a new Encouter
+export async function generateEncounter(encounterPrompt, challengeRating, includeImage=false) {
+  const generator = new Generator()
+
+  // Generate the Encounter
+  const encounter = await generator.generateEncounter(encounterPrompt, challengeRating)
+
+  // Check if the user has an Actors folder called 'AI Generated NPCs'
+  let parentFolder = game.folders.getName('AI Generated NPCs')
+  if (!parentFolder) {
+    parentFolder = await Folder.create({name: 'AI Generated NPCs', type: 'Actor'})
+  }
+
+  // Create the Actor folder for the encounter
+  let folder = await Folder.create({name: `Encounter - ${encounter.name}`, type: 'Actor', parent: parentFolder.id})
+
+  // Create the Actors
+  for (let npc of encounter.npcs) {
+    const actor = await generateNPC(`
+      Name of the NPC, this should be the name of the NPC: ${npc.name}
+      Description of the NPC: ${npc.description}
+      `, npc.challengeRating, includeImage)
+    await actor.update({folder: folder.id})
+  }
+
+  // Create the Journal Entry for the encounter
+  // Check for the parent folder
+  parentFolder = game.folders.getName('AI Generated Encounter Journal Entries')
+  if (!parentFolder) {
+    parentFolder = await Folder.create({name: 'AI Generated Encounter Journal Entries', type: 'JournalEntry'})
+  }
+
+  // Check for the Journal Entry folder for the encounter
+  let journalFolder = await Folder.create({name: `Encounter - ${encounter.name}`, type: 'JournalEntry', parent: parentFolder.id})
+
+  // Create the Journal Entry
+  const journalEntry = await JournalEntry.create({
+    name: encounter.name,
+    folder: journalFolder.id,
+    content: `
+    <h2>Encounter</h2>
+    <p>${encounter.description}</p>
+    <p>Challenge Rating: ${encounter.challengeRating}</p>
+    <h2>Objective</h2>
+    <p>${encounter.objective}</p>
+    <h2>Enemies</h2>
+    <ul>
+      ${encounter.npcs.map(npc => `<li>${npc.name} x${npc.count}</li>`).join('')}
+    </ul>
+    `
+  })
+
+  return folder
+}
+
+// Generate a new Quest
+export async function generateQuest(questPrompt, includeImage=false, useQuestLog=false) {
+  const generator = new Generator()
+
+  // Generate the Quest
+  const quest = await generator.generateQuest(questPrompt)
+
+  // Generate the Quest image
+  let imagePath = ''
+  if(includeImage) {
+    const newImagePrompt = quest.questImageDescription
+    console.log(`Generating Image: ${newImagePrompt}`)
+    const image64 = await generator.generateImage(newImagePrompt)
+
+    // Create a file from the base64 encoded image
+    const bytes = atob(image64)
+    const buffer = new ArrayBuffer(bytes.length)
+    const bufferView = new Uint8Array(buffer)
+    for (let i = 0; i < bytes.length; i++) {
+      bufferView[i] = bytes.charCodeAt(i)
+    }
+    // Generate a random file name
+    const randomString = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+    const blob = new Blob([buffer], {type: 'image/png'})
+    const file = new File([blob], `${randomString}.png`, {type: 'image/png'})
+
+    // Upload the file to the server
+    FilePicker.upload('data', `modules/foundry-ai-assistant/images`, file).then((path) => {
+      console.log(`Image uploaded to ${path}`)
+    })
+
+    imagePath = `modules/foundry-ai-assistant/images/${file.name}`
+  }
+
+  let journalEntry = null
+  if (useQuestLog) {
+    const QuestDBShimModule = await import('/modules/forien-quest-log/src/control/public/QuestDBShim.js')
+    const QuestDBShim = QuestDBShimModule.default
+
+    // Create a quest for Forien's Quest Log
+    let imageData = {}
+    if(includeImage) {
+      imageData = {
+        image: imagePath,
+        giver: "abstract",
+        giverData: {
+          hasTokenImg: false,
+          img: imagePath,
+          name: "Custom Source"
+        }
+      }
+    }
+    const questData = {
+      ...imageData,
+      name: quest.name,
+      description: quest.description,
+      rewards: quest.rewards.map(reward => {
+        return {
+          data: {
+            name: reward
+          },
+          type: 'abstract'
+        }
+      }),
+      tasks: quest.objectives.map(objective => {
+        return {
+          name: objective,
+        }
+      })
+    }
+
+    journalEntry = await QuestDBShim.createQuest({
+      data: questData
+    })
+  } else {
+    // Make a normal Journal entry
+    // Check for the parent folder
+    let parentFolder = game.folders.getName('AI Generated Quests')
+    if (!parentFolder) {
+      parentFolder = await Folder.create({name: 'AI Generated Quests', type: 'JournalEntry'})
+    }
+
+    // Create the Journal Entry
+    journalEntry = await JournalEntry.create({
+      name: quest.name,
+      folder: parentFolder.id,
+      img: imagePath,
+      content: `
+      <h2>Quest</h2>
+      <p>${quest.description}</p>
+      <h2>Objectives</h2>
+      <ul>
+        ${quest.objectives.map(objective => `<li>${objective}</li>`).join('')}
+      </ul>
+      <h2>Rewards</h2>
+      <ul>
+        ${quest.rewards.map(reward => `<li>${reward}</li>`).join('')}
+      </ul>
+      `
+    })
+  }
+
+  return journalEntry  
+}
+
+// Generate a background
+export async function generateBackground(backgroundPrompt) {
+  const generator = new Generator()
+
+  // Generate the prompt for the background
+  const newBackgroundPrompt = await generator.generateBackgroundPrompt(backgroundPrompt)
+
+  // Generate the image
+  const image64 = await generator.generateImage(newBackgroundPrompt.prompt)
+  
+  // Create a file from the base64 encoded image
+  const bytes = atob(image64)
+  const buffer = new ArrayBuffer(bytes.length)
+  const bufferView = new Uint8Array(buffer)
+  for (let i = 0; i < bytes.length; i++) {
+    bufferView[i] = bytes.charCodeAt(i)
+  }
+  const blob = new Blob([buffer], {type: 'image/png'})
+  const randomNumber = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+  const file = new File([blob], `${randomNumber}.png`, {type: 'image/png'})
+
+  // Upload the file to the server
+  FilePicker.upload('data', `modules/foundry-ai-assistant/images`, file).then((path) => {
+    console.log(`Image uploaded to ${path}`)
+  })
+
+  const imagePath = `modules/foundry-ai-assistant/images/${file.name}`
+
+  // Check for the parent folder
+  let parentFolder = game.folders.getName('AI Generated Backgrounds')
+  if (!parentFolder) {
+    parentFolder = await Folder.create({name: 'AI Generated Backgrounds', type: 'Scene'})
+  }
+
+  // Create a new scene
+  const scene = await Scene.create({
+    name: newBackgroundPrompt.name,
+    img: imagePath,
+    folder: parentFolder.id
+  })
+
+  return scene
+}
+
+// Generate an item
+export async function generateItem(itemPrompt, includeImage, imagePrompt) {
+  const generator = new Generator()
+
+  // Generate the item
+  const item = await generator.generateItem(itemPrompt)
+
+  // Generate the image
+  let imagePath = ''
+  if (includeImage) {
+    const newImagePrompt = `A 2D sprite of ${(imagePrompt !== '') ? imagePrompt : item.imageGenerationPrompt}, white background, stylized`
+    console.log(`Generating Image: ${newImagePrompt}`)
+    const image64 = await generator.generateImage(newImagePrompt)
+
+    console.log("Converting to white")
+    const image64NoWhiteBackground = await generator.removeWhiteBackground(image64);
+    console.log(image64NoWhiteBackground)
+
+    // Create a file from the base64 encoded image
+    const bytes = atob(image64NoWhiteBackground)
+    const buffer = new ArrayBuffer(bytes.length)
+    const bufferView = new Uint8Array(buffer)
+    for (let i = 0; i < bytes.length; i++) {
+      bufferView[i] = bytes.charCodeAt(i)
+    }
+    // Generate a random number
+    const randomNumber = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+    const blob = new Blob([buffer], {type: 'image/png'})
+    const file = new File([blob], `${randomNumber}.png`, {type: 'image/png'})
+
+    // Upload the file to the server
+    FilePicker.upload('data', `modules/foundry-ai-assistant/images`, file).then((path) => {
+      console.log(`Image uploaded to ${path}`)
+    })
+
+    imagePath = `modules/foundry-ai-assistant/images/${file.name}`
+  }
+
+  // Check for the parent folder
+  let parentFolder = game.folders.getName('AI Generated Items')
+  if (!parentFolder) {
+    parentFolder = await Folder.create({name: 'AI Generated Items', type: 'Item'})
+  }
+
+  // Create the Item
+  const newItem = await Item.create({
+    name: item.name,
+    folder: parentFolder.id,
+    type: item.type,
+    img: imagePath,
+    data: {
+      description: {
+        value: `<h2>Description</h2>${item.description}` + ((item.effect !== '') ? `<br><br><h2>Effect</h2>${item.effect}` : '')
+      }
+    }
+  })
+
+  return newItem
+}
+
+// Generate a puzzle
+export async function generatePuzzle(puzzlePrompt, includeImage, imagePrompt){
+  const generator = new Generator()
+
+  // Generate the puzzle
+  const puzzle = await generator.generatePuzzle(puzzlePrompt)
+
+  // Generate the image
+  let imagePath = ''
+  if (includeImage) {
+    const image64 = await generator.generateImage(puzzle.imageGenerationPrompt)
+
+    // Create a file from the base64 encoded image
+    const bytes = atob(image64)
+    const buffer = new ArrayBuffer(bytes.length)
+    const bufferView = new Uint8Array(buffer)
+    for (let i = 0; i < bytes.length; i++) {
+      bufferView[i] = bytes.charCodeAt(i)
+    }
+    // Generate a random number
+    const randomNumber = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+    const blob = new Blob([buffer], {type: 'image/png'})
+    const file = new File([blob], `${randomNumber}.png`, {type: 'image/png'})
+
+    // Upload the file to the server
+    FilePicker.upload('data', `modules/foundry-ai-assistant/images`, file).then((path) => {
+      console.log(`Image uploaded to ${path}`)
+    })
+
+    imagePath = `modules/foundry-ai-assistant/images/${file.name}`
+  }
+
+  // Check for the parent folder
+  let parentFolder = game.folders.getName('AI Generated Puzzles')
+  if (!parentFolder) {
+    parentFolder = await Folder.create({name: 'AI Generated Puzzles', type: 'JournalEntry'})
+  }
+
+  // Create the Journal Entry
+  const journalEntry = await JournalEntry.create({
+    name: puzzle.name,
+    folder: parentFolder.id,
+    img: imagePath,
+    content: `
+    <h2>Puzzle</h2>
+    <p>${puzzle.description}</p>
+    <h2>Solution</h2>
+    <p>${puzzle.solution}</p>
+    `
+  })
+
+  return journalEntry
+}

@@ -1,21 +1,20 @@
 <div>
     <script type="module">
-        import { generateNPC } from '/modules/foundry-ai-assistant/scripts/aiAssistant.js';
+        import { generatePuzzle } from '/modules/foundry-ai-assistant/scripts/aiAssistant.js';
 
+        // Clear the event listener for the generate button
         document.getElementById('generateButton').removeEventListener('click', () => {});
         document.getElementById('generateButton').addEventListener('click', async () => {
-            const npcPrompt = document.getElementById('npcPrompt').value;
+            const itemPrompt = document.getElementById('itemPrompt').value;
             const includeImage = document.getElementById('includeImage').checked;
             const imagePrompt = document.getElementById('imagePrompt').value;
-            const challengeRating = document.getElementById('challengeRating').value;
 
             document.getElementById('generateStatusText').innerText = 'Generating...';
-            generateNPC(npcPrompt, challengeRating, includeImage, imagePrompt).then((npc) => {
+            generatePuzzle(itemPrompt, includeImage, imagePrompt).then((puzzle) => {
                 document.getElementById('generateStatusText').innerText = '';
-                console.log(npc);
+                console.log(puzzle);
             });
         });
-
     </script>
     <script>
         function includeImageCheckboxClicked() {
@@ -29,34 +28,24 @@
         }
     </script>
     <div>
-        <h2>Generate NPC</h2>
+        <h2>Generate Puzzle</h2>
         <h4>Prompt</h4>
-        <textarea id="npcPrompt" placeholder="Enter a prompt for the NPC"></textarea>
+        <textarea id="itemPrompt" placeholder="Enter a prompt to describe the puzzle. Leave blank to generate a random puzzle"></textarea>
         <div style="
             display: flex;
             flex-direction: column;
         ">
-            <p>
-                Leave the CR field blank to let the AI choose a CR for the NPC.
-            </p>
-            <div style="
-                display: flex;
-                align-items: center;
-            ">
-                <span style="margin-right: 5px;">CR: </span>
-                <input type="number" id="challengeRating" name="challengeRating" placeholder="CR" min="1" max="20" style="width: 30px;">
-            </div>
             <div style="
                 display: flex;
                 align-items: center;
             ">
                 <input type="checkbox" id="includeImage" name="includeImage" value="includeImage" onclick="includeImageCheckboxClicked()">
-                <span>Include Image</span>
+                <span style="margin-right: 10px;">Include Puzzle Image</span>
             </div>
         </div>
         <div id="imageOptions" style="display: none;">
             <h4>Image Prompt</h4>
-            <textarea id="imagePrompt" placeholder="Enter a prompt for the image. If blank, the NPC description will be used to generate the image"></textarea>
+            <textarea id="imagePrompt" placeholder="Enter a prompt for the image. If blank, the quest description will be used to generate the image"></textarea>
         </div>
         <p id="generateStatusText"></p>
         <button id="generateButton">Generate</button>
