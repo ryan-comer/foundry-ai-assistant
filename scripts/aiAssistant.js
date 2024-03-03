@@ -10,6 +10,16 @@ Hooks.on('ready', function() {
       type: String,
       default: ""
   });
+
+  // Set a setting for the Stable Diffusion endpoint
+  game.settings.register("foundry-ai-assistant", "stableDiffusionEndpoint", {
+    name: "Stable Diffusion Endpoint",
+    hint: "The endpoint for the Stable Diffusion API (IP:PORT)",
+    scope: "world",
+    config: true,
+    type: String,
+    default: "localhost:7860"
+  })
 })
 
 // Load the Sidebar UI
@@ -160,16 +170,19 @@ export async function generateNPC(npcPrompt, challengeRating, includeImage=false
 
   // Generate the image
   if (includeImage) {
-    const newImagePrompt = `A 2D sprite of ${(imagePrompt !== '') ? imagePrompt : npc.imageGenerationPrompt}, white background, stylized`
+    const newImagePrompt = `A character sprite of ${(imagePrompt !== '') ? imagePrompt : npc.imageGenerationPrompt}, 2D, stylized, white background, clear outline`
     console.log(`Generating Image: ${newImagePrompt}`)
-    const image64 = await generator.generateImage(newImagePrompt)
+    const image64 = await generator.generateImage(newImagePrompt, true)
 
+    /*
     console.log("Converting to white")
     const image64NoWhiteBackground = await generator.removeWhiteBackground(image64);
     console.log(image64NoWhiteBackground)
+    */
 
     // Create a file from the base64 encoded image
-    const bytes = atob(image64NoWhiteBackground)
+    //const bytes = atob(image64NoWhiteBackground)
+    const bytes = atob(image64)
     const buffer = new ArrayBuffer(bytes.length)
     const bufferView = new Uint8Array(buffer)
     for (let i = 0; i < bytes.length; i++) {
@@ -450,7 +463,7 @@ export async function generateBackground(backgroundPrompt) {
   const newBackgroundPrompt = await generator.generateBackgroundPrompt(backgroundPrompt)
 
   // Generate the image
-  const image64 = await generator.generateImage(newBackgroundPrompt.prompt)
+  const image64 = await generator.generateImage(`A top-down 2D battlemap of ${newBackgroundPrompt.prompt}, (top-down), (2D)`)
   
   // Create a file from the base64 encoded image
   const bytes = atob(image64)
@@ -496,16 +509,19 @@ export async function generateItem(itemPrompt, includeImage, imagePrompt) {
   // Generate the image
   let imagePath = ''
   if (includeImage) {
-    const newImagePrompt = `A 2D sprite of ${(imagePrompt !== '') ? imagePrompt : item.imageGenerationPrompt}, white background, stylized`
+    const newImagePrompt = `A 2D sprite of ${(imagePrompt !== '') ? imagePrompt : item.imageGenerationPrompt}, 2D, stylized, white background, clear outline`
     console.log(`Generating Image: ${newImagePrompt}`)
-    const image64 = await generator.generateImage(newImagePrompt)
+    const image64 = await generator.generateImage(newImagePrompt, true)
 
+    /*
     console.log("Converting to white")
     const image64NoWhiteBackground = await generator.removeWhiteBackground(image64);
     console.log(image64NoWhiteBackground)
+    */
 
     // Create a file from the base64 encoded image
-    const bytes = atob(image64NoWhiteBackground)
+    //const bytes = atob(image64NoWhiteBackground)
+    const bytes = atob(image64)
     const buffer = new ArrayBuffer(bytes.length)
     const bufferView = new Uint8Array(buffer)
     for (let i = 0; i < bytes.length; i++) {
@@ -598,4 +614,58 @@ export async function generatePuzzle(puzzlePrompt, includeImage, imagePrompt){
   })
 
   return journalEntry
+}
+
+// Generate a tile (inanimate object)
+export async function generateTile(tilePrompt, includeImage, imagePrompt) {
+  const generator = new Generator()
+
+  // Generate the tile
+  const tile = await generator.generateTile(tilePrompt)
+
+  // Generate the image
+  let imagePath = ''
+  if (includeImage) {
+    const newImagePrompt = `A 2D sprite of ${(imagePrompt !== '') ? imagePrompt : tile.imageGenerationPrompt}, vtt, dnd, top-down, stylized, solid background, clear outline`
+    console.log(`Generating Image: ${newImagePrompt}`)
+    const image64 = await generator.generateImage(newImagePrompt, true)
+
+    // Create a file from the base64 encoded image
+    const bytes = atob(image64)
+    const buffer = new ArrayBuffer(bytes.length)
+    const bufferView = new Uint8Array(buffer)
+    for (let i = 0; i < bytes.length; i++) {
+      bufferView[i] = bytes.charCodeAt(i)
+    }
+    // Generate a random number
+    const randomNumber = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+    const blob = new Blob([buffer], {type: 'image/png'})
+    const file = new File([blob], `${randomNumber}.png`, {type: 'image/png'})
+
+    // Upload the file to the server
+    FilePicker.upload('data', `modules/foundry-ai-assistant/images`, file).then((path) => {
+      console.log(`Image uploaded to ${path}`)
+    })
+
+    imagePath = `modules/foundry-ai-assistant/images/${file.name}`
+  }
+
+  // Get the tile coordinates of the mouse
+  const tileSize = canvas.grid.size
+  const x = Math.floor((canvas.app.renderer.plugins.interaction.mouse.global.x - canvas.stage.x) / tileSize) * tileSize
+  const y = Math.floor((canvas.app.renderer.plugins.interaction.mouse.global.y - canvas.stage.y) / tileSize) * tileSize
+
+  // Create the Tile
+  const newTile = await canvas.scene.createEmbeddedDocuments("Tile", [{
+    img: imagePath,
+    width: tile.width,
+    height: tile.height,
+    x: 0,
+    y: 0,
+    z: 100,
+    rotation: 0,
+    hidden: false
+  }])
+
+  return newTile
 }

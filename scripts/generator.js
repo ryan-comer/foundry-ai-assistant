@@ -8,13 +8,14 @@ export class Generator {
     constructor() {
         // Load the OpenAI GPT-3.5 API key from the Foundry VTT settings
         this.apiKey = game.settings.get("foundry-ai-assistant", "openaiApiKey");
+        this.stableDiffusionEndpoint = game.settings.get("foundry-ai-assistant", "stableDiffusionEndpoint")
         if(!this.apiKey) {
             console.error("OpenAI API key not found. Please enter your API key in the Foundry VTT settings.");
             return;
         }
 
         this.textGenerator = new OpenAITextGenerator(this.apiKey);
-        this.stableDiffusionImageGenerator = new StableDiffusionImageGenerator();
+        this.stableDiffusionImageGenerator = new StableDiffusionImageGenerator(this.stableDiffusionEndpoint);
     }
 
     // Generate a new NPC
@@ -36,6 +37,9 @@ export class Generator {
             "bonds": "BONDS_OF_CHARACTER",  // String
             "flaws": "FLAWS_OF_CHARACTER",  // String
             "challengeRating": "CHALLENGE_RATING",  // Integer
+            // Make sure the size of the character makes sense
+            // If the character is something like a dragon or a giant, then they're really big
+            // If the character is something like a pixie or a gnome, then they're really small
             "size": "SIZE_OF_CHARACTER",    // ["tiny", "sm", "med", "lg", "huge", "grg"]
             "attributes": {
                 "strength": "STRENGTH_VALUE",   // Integer
@@ -96,6 +100,10 @@ export class Generator {
 
         Here is the prompt:
         `;
+
+        if (!!challengeRating) {
+            userPrompt += `The challenge rating for this NPC should be ${challengeRating}.`;
+        }
 
         const response = await this.textGenerator.generateText(systemPrompt, userPrompt);
         return response
@@ -163,6 +171,9 @@ export class Generator {
         The encounter challenge rating of the encounter is the how difficult the entire encounter is for the party
         The npc challenge rating is how difficult the individual NPCs are for the party
         If you take all the npc challenge ratings into account, the encounter challenge rating should be accurate
+        For example, if the challenge rating of the encounter is 6, then all of the NPCs in the encounter should add up to a challenge rating of around 6
+        Make sure to take the count of each NPC into account
+        It's okay to set the challenge rating on an NPC to something different than what that NPC would normally be to make the encounter challenge rating accurate
 
         ${challengeRating ? `The challenge rating for this encounter should be ${challengeRating}.` : ''}
 
@@ -172,6 +183,10 @@ export class Generator {
 
         Here is the prompt:
         `;
+
+        if (!!challengeRating) {
+            userPrompt += `The challenge rating for this encounter should be ${challengeRating}.`;
+        }
 
         const response = await this.textGenerator.generateText(systemPrompt, userPrompt);
         return response
@@ -230,12 +245,12 @@ export class Generator {
         Make sure to include the fack that this is a background for a fantasy world in the prompt.
 
         Here are some examples of prompts:
-        A battle map for a forest clearing, with a small stream running through the middle, and a large, ancient tree in the center, top down, 2D
-        A battle map for a dark, underground cavern, with glowing mushrooms and a large, underground lake, top down, 2D
-        A battle map for a large, open field, with a small village in the distance, top down, 2D
+        A forest clearing, with a small stream running through the middle, and a large, ancient tree in the center
+        A dark, underground cavern, with glowing mushrooms and a large, underground lake
+        A large, open field, with a small village in the distance
 
         These are just examples so don't copy them directly, make sure to create your own prompt
-        You should however include the 'battle map' and 'top down, 2D' in the prompt
+        Keep the prompt simple, only add what's necessary to get the point across
 
         Give your response in the following JSON format:
         {
@@ -319,6 +334,35 @@ export class Generator {
         return response
     }
 
+    // Generate a tile
+    async generateTile(userPrompt) {
+        const systemPrompt = `
+        You will be generating a tile for a fantasy world based on a prompt from the user.
+        A tile is an object that is placed on a grid, like a battle map, and is used to create a scene for the players to interact with.
+
+        Give your response in the following JSON format:
+        {
+            "name": "TILE_NAME",   // String
+            // String, A description of the image that will be generated for the tile
+            // This will be used in an image generator to create an image for the tile
+            // Example: "A wooden barrel with metal bands around it"
+            "imageGenerationPrompt": "IMAGE_GENERATION_PROMPT",
+            // The width and height should be multiples of 100
+            // A size of 100 is a 5 foot square in a battle map
+            "width": "TILE_WIDTH",  // Integer, the width of the tile in grid units (100, 200, 300, etc.)
+            "height: "TILE_HEIGHT", // Integer, the height of the tile in grid units (100, 200, 300, etc.)
+        }
+
+        Only respond with the JSON format, don't include any other text.
+
+        If the user does not provide a prompt, create a completely random tile.
+        Here is the prompt:
+        `
+
+        const response = await this.textGenerator.generateText(systemPrompt, userPrompt);
+        return response
+    }
+
     generateLocation() {
 
     }
@@ -335,8 +379,8 @@ export class Generator {
 
     }
 
-    async generateImage(prompt) {
-        const result = await this.stableDiffusionImageGenerator.generateImage(prompt);
+    async generateImage(prompt, removeBackground=false) {
+        const result = await this.stableDiffusionImageGenerator.generateImage(prompt, removeBackground);
         return result
     }
 

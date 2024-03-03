@@ -16,17 +16,6 @@
             });
         });
     </script>
-    <script>
-        function includeImageCheckboxClicked() {
-            const includeImage = document.getElementById('includeImage').checked;
-
-            if(includeImage) {
-                document.getElementById('imageOptions').style.display = 'block';
-            } else {
-                document.getElementById('imageOptions').style.display = 'none';
-            }
-        }
-    </script>
     <div>
         <h2>Generate Encounter</h2>
         <h4>Prompt</h4>
@@ -49,13 +38,9 @@
                 display: flex;
                 align-items: center;
             ">
-                <input type="checkbox" id="includeImage" name="includeImage" value="includeImage" onclick="includeImageCheckboxClicked()">
+                <input type="checkbox" id="includeImage" name="includeImage" value="includeImage">
                 <span>Include NPC Images</span>
             </div>
-        </div>
-        <div id="imageOptions" style="display: none;">
-            <h4>Image Prompt</h4>
-            <textarea id="imagePrompt" placeholder="Enter a prompt for the image. If blank, the NPC description will be used to generate the image"></textarea>
         </div>
         <p id="generateStatusText"></p>
         <button id="generateButton">Generate</button>

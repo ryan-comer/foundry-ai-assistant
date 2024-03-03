@@ -1,0 +1,53 @@
+<div>
+    <script type="module">
+        import { generateTile } from '/modules/foundry-ai-assistant/scripts/aiAssistant.js';
+
+        // Clear the event listener for the generate button
+        document.getElementById('generateButton').removeEventListener('click', () => {});
+        document.getElementById('generateButton').addEventListener('click', async () => {
+            const itemPrompt = document.getElementById('tilePrompt').value;
+            const includeImage = document.getElementById('includeImage').checked;
+            const imagePrompt = document.getElementById('imagePrompt').value;
+
+            document.getElementById('generateStatusText').innerText = 'Generating...';
+            generateTile(itemPrompt, includeImage, imagePrompt).then((tile) => {
+                document.getElementById('generateStatusText').innerText = '';
+                console.log(tile);
+            });
+        });
+    </script>
+    <script>
+        function includeImageCheckboxClicked() {
+            const includeImage = document.getElementById('includeImage').checked;
+
+            if(includeImage) {
+                document.getElementById('imageOptions').style.display = 'block';
+            } else {
+                document.getElementById('imageOptions').style.display = 'none';
+            }
+        }
+    </script>
+    <div>
+        <h2>Generate Tile</h2>
+        <h4>Prompt</h4>
+        <textarea id="tilePrompt" placeholder="Enter a prompt to describe the tile. Leave blank to generate a random tile"></textarea>
+        <div style="
+            display: flex;
+            flex-direction: column;
+        ">
+            <div style="
+                display: flex;
+                align-items: center;
+            ">
+                <input type="checkbox" id="includeImage" name="includeImage" value="includeImage" onclick="includeImageCheckboxClicked()">
+                <span style="margin-right: 10px;">Include Tile Image</span>
+            </div>
+        </div>
+        <div id="imageOptions" style="display: none;">
+            <h4>Image Prompt</h4>
+            <textarea id="imagePrompt" placeholder="Enter a prompt for the image. If blank, the quest description will be used to generate the image"></textarea>
+        </div>
+        <p id="generateStatusText"></p>
+        <button id="generateButton">Generate</button>
+    </div>
+</div>

@@ -20,6 +20,9 @@
         document.getElementById('generatePuzzleButton').addEventListener('click', () => {
             openAssistantMenu('Generate Puzzle', 'modules/foundry-ai-assistant/assistant_templates/generate_puzzle_menu.html');
         });
+        document.getElementById('generateTileButton').addEventListener('click', () => {
+            openAssistantMenu('Generate Tile', 'modules/foundry-ai-assistant/assistant_templates/generate_tile_menu.html');
+        });
     </script>
 
     <button id="generateNPCButton">
@@ -39,5 +42,8 @@
     </button>
     <button id="generatePuzzleButton">
         Generate Puzzle
+    </button>
+    <button id="generateTileButton">
+        Generate Tile
     </button>
 </div>
